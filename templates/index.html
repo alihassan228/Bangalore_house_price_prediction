@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bangalore House Price Predictor</title>
+    <style>
+        :root {
+            --dragon-1: #ff0055;
+            --dragon-2: #7000ff;
+            --dragon-3: #00d4ff;
+            --error-red: #ff4d4d;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background: #050505;
+        }
+
+        /* FLYING DRAGON BACKGROUND */
+        .dragon-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(125deg, #050505, #111, #050505);
+            z-index: -1;
+        }
+
+        .dragon-layer {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 50% 50%, var(--dragon-1), transparent 50%),
+                radial-gradient(circle at 20% 30%, var(--dragon-2), transparent 50%),
+                radial-gradient(circle at 80% 70%, var(--dragon-3), transparent 50%);
+            filter: blur(80px);
+            opacity: 0.35;
+            animation: fly 20s infinite linear;
+        }
+
+        @keyframes fly {
+            0% {
+                transform: translate(-25%, -25%) rotate(0deg);
+            }
+
+            50% {
+                transform: translate(0%, 0%) rotate(180deg);
+            }
+
+            100% {
+                transform: translate(-25%, -25%) rotate(360deg);
+            }
+        }
+
+        #container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 50px;
+            border-radius: 40px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+            text-align: center;
+            transition: 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+            max-width: 600px;
+        }
+
+        h1 {
+            color: white;
+            font-weight: 200;
+            letter-spacing: 4px;
+            margin-bottom: 40px;
+            font-size: 1.8rem;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+
+        .field-group {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            padding-left: 5px;
+        }
+
+        input,
+        select {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            width: 220px;
+            transition: 0.3s;
+        }
+
+        input.error {
+            border-color: var(--error-red);
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.4);
+        }
+
+        .btn-predict {
+            background: #fff;
+            color: #000;
+            padding: 18px 60px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.4s;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 20px;
+        }
+
+        .btn-predict:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 212, 255, 0.4);
+            background: var(--dragon-3);
+            color: #fff;
+        }
+
+        /* THE REALISTIC PANDA & LAMP */
+        #panda-scene {
+            position: absolute;
+            right: 2%;
+            bottom: -20px;
+            width: 450px;
+            height: 550px;
+            pointer-events: none;
+        }
+
+        .real-panda {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.9));
+        }
+
+        .lamp-rope {
+            position: absolute;
+            right: 135px;
+            top: -250px;
+            width: 3px;
+            height: 450px;
+            background: #222;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-origin: top;
+        }
+
+        .rope-handle {
+            position: absolute;
+            bottom: 0;
+            left: -11px;
+            width: 25px;
+            height: 25px;
+            background: radial-gradient(circle, #ffd700, #b8860b);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+
+        /* RESULT VIEW & THUNDER EFFECT */
+        #result-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.8s;
+        }
+
+        .thunder-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        #price-text {
+            font-size: 5.5rem;
+            color: white;
+            font-weight: 900;
+            background: linear-gradient(to bottom, #fff 30%, var(--dragon-3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 20px 0;
+        }
+
+        #error-msg {
+            color: var(--error-red);
+            font-size: 0.9rem;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .predict-again {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="thunder-flash" id="flash"></div>
+
+    <div class="dragon-bg">
+        <div class="dragon-layer"></div>
+    </div>
+
+    <div id="container">
+        <div class="glass-card" id="main-card">
+            <h1>BANGALORE HOUSE PRICE</h1>
+
+            <div class="input-row">
+                <div class="field-group">
+                    <label>House Category</label>
+                    <select id="type">
+                        <option value="Super built-up Area">Super Built-up</option>
+                        <option value="Built-up Area">Built-up Area</option>
+                        <option value="Plot Area">Plot Area</option>
+                        <option value="Carpet Area">Carpet Area</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>Location</label>
+                    <input type="text" id="loc" placeholder="e.g. Whitefield" class="validate">
+                </div>
+            </div>
+
+            <div class="input-row">
+                <div class="field-group">
+                    <label>Area (Sq. Ft)</label>
+                    <input type="number" id="sqft" placeholder="e.g. 1500" class="validate">
+                </div>
+                <div class="field-group">
+                    <label>Total Bedrooms</label>
+                    <input type="number" id="bhk" placeholder="e.g. 3" class="validate">
+                </div>
+            </div>
+
+            <div class="input-row">
+                <div class="field-group">
+                    <label>Total Bathrooms</label>
+                    <input type="number" id="bath" placeholder="e.g. 2" style="width: 460px;" class="validate">
+                </div>
+            </div>
+
+            <button class="btn-predict" onclick="runPrediction()">Evaluate Property</button>
+            <div id="error-msg">⚠️ Please fill all fields to continue.</div>
+        </div>
+    </div>
+
+    <div id="panda-scene">
+        <img src="https://www.transparentpng.com/download/panda/panda-high-quality-png-7.png" class="real-panda"
+            alt="Panda">
+        <div class="lamp-rope" id="rope">
+            <div class="rope-handle"></div>
+        </div>
+    </div>
+
+    <div id="result-screen">
+        <div style="color: var(--dragon-3); letter-spacing: 8px; font-weight: 200;">MARKET ESTIMATE</div>
+        <div id="price-text">₹ 0.00</div>
+        <div style="color: rgba(255,255,255,0.4); margin-bottom: 40px;">*Prices are calculated in Lakhs</div>
+        <button class="predict-again" onclick="reset()">Predict Another</button>
+    </div>
+
+    <script>
+        async function runPrediction() {
+            const inputs = document.querySelectorAll('.validate');
+            const errorMsg = document.getElementById('error-msg');
+            const flash = document.getElementById('flash');
+            let allFilled = true;
+
+            // 1. Validation Logic
+            inputs.forEach(input => {
+                if (input.value.trim() === "") {
+                    input.classList.add('error');
+                    allFilled = false;
+                } else {
+                    input.classList.remove('error');
+                }
+            });
+
+            if (!allFilled) {
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            errorMsg.style.display = 'none';
+            const rope = document.getElementById('rope');
+            const mainCard = document.getElementById('main-card');
+            const resScreen = document.getElementById('result-screen');
+
+            // 2. Start Animation: Pull the Rope
+            rope.style.transform = "scaleY(1.3)";
+
+            // 3. THE SOLUTION: Talking to your Python Flask /predict route
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        location: document.getElementById('loc').value,
+                        sqft: document.getElementById('sqft').value,
+                        bhk: document.getElementById('bhk').value,
+                        bath: document.getElementById('bath').value,
+                        type: document.getElementById('type').value
+                    })
+                });
+
+                const data = await response.json();
+
+                // 4. Cinematic Reveal Sequence
+                setTimeout(() => {
+                    rope.style.transform = "scaleY(1)";
+                    mainCard.style.opacity = "0";
+                    mainCard.style.transform = "translateY(-50px) scale(0.9)";
+
+                    setTimeout(() => {
+                        // THUNDER FLASH EFFECT
+                        flash.style.opacity = "0.8";
+                        setTimeout(() => { flash.style.opacity = "0"; }, 100);
+
+                        // SHOW THE REAL PRICE FROM PYTHON
+                        document.getElementById('price-text').innerText = "₹ " + data.price + " Lakhs";
+
+                        resScreen.style.display = 'flex';
+                        setTimeout(() => { resScreen.style.opacity = '1'; }, 50);
+                    }, 600);
+                }, 300);
+
+            } catch (error) {
+                console.error("Connection Error:", error);
+                alert("OMG! Cannot connect to Python Flask server. Make sure app.py is running!");
+                rope.style.transform = "scaleY(1)";
+            }
+        }
+
+        function reset() {
+            const resScreen = document.getElementById('result-screen');
+            const mainCard = document.getElementById('main-card');
+            const inputs = document.querySelectorAll('.validate');
+
+            inputs.forEach(i => { i.value = ""; i.classList.remove('error'); });
+            resScreen.style.opacity = '0';
+            setTimeout(() => {
+                resScreen.style.display = 'none';
+                mainCard.style.opacity = '1';
+                mainCard.style.transform = 'translateY(0) scale(1)';
+            }, 800);
+        }
+    </script>
+</body>
+
+</html>
